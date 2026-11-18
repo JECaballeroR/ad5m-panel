@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Adventurer 5M Pro Panel",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "minimum_chrome_version": "116",
   "description": "Control your Flashforge Adventurer 5M Pro over your local network: camera, temperatures, jobs, tuning, light, fans and files.",
   "action": {

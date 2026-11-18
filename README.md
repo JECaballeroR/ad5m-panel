@@ -2,7 +2,7 @@
 
 A Chrome extension for monitoring and controlling a Flashforge Adventurer 5M Pro over your local network. It shows the camera feed, print progress, and temperatures, and covers every control the printer's LAN API exposes. Everything runs in your browser and talks to the printer directly, with no cloud account and no server in between.
 
-Version 2.1.0
+Version 2.2.0
 
 ## Features
 
@@ -71,6 +71,7 @@ The extension tests the connection before saving. Your details are stored locall
 
 - The panel refreshes the printer status every 2 seconds and slows to every 10 seconds when it isn't visible.
 - The camera stops when the panel is hidden to save bandwidth, unless the camera is floating.
+- The camera feed reconnects every 4 minutes while it's showing, and also whenever it stops receiving frames for 15 seconds. Turn off the timed reconnect under **Machine → Camera**.
 - Speed, Z offset, and fan controls are disabled unless a print is running or paused, because the printer only accepts those changes during a print.
 - The floating window belongs to the page that opened it. If you float the camera from the side panel and then close the side panel, the floating window closes too. To keep it up for a long time, float it from the full panel.
 - If your browser can't open a floating window from the current view, "Float" opens a separate camera window instead.

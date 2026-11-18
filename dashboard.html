@@ -193,6 +193,12 @@
         <button id="btnCalibrate" class="btn small">Start calibration</button>
         <p class="hint">Only runs while the printer is idle.</p>
 
+        <h3 class="sub">Camera</h3>
+        <div class="opts">
+          <label><input id="optCamRefresh" type="checkbox" checked> Reconnect the feed every 4 minutes</label>
+        </div>
+        <p class="hint">Keeps the feed from freezing. The feed also reconnects on its own if it stops receiving frames.</p>
+
         <h3 class="sub">Auto shutdown</h3>
         <div class="row">
           <span id="lblShutdown">Turn off after a print finishes</span>

@@ -309,7 +309,22 @@ async function loadProduct() {
 
 // ---------- Camera ----------
 
-const cam = { paused: false, abort: null, watch: null, url: null };
+const cam = { paused: false, abort: null, watch: null, url: null, refresh: null, stall: null, lastFrame: 0 };
+
+// The printer's camera stream can stop sending frames after a while, so the feed
+// reconnects on a timer while it's showing. Can be turned off under Machine.
+const CAM_REFRESH_MS = 4 * 60 * 1000;
+const CAM_STALL_MS = 15 * 1000;
+let camAutoRefresh = true;
+
+function scheduleCamRefresh() {
+  clearTimeout(cam.refresh);
+  cam.refresh = null;
+  if (!camAutoRefresh) return;
+  cam.refresh = setTimeout(() => {
+    if (cfg && !cam.paused && !inBackground()) startCamera({ quiet: true });
+  }, CAM_REFRESH_MS);
+}
 
 function camMsg(text) {
   const m = CAM.msg;
@@ -325,6 +340,10 @@ function cameraUrl() {
 function stopCamera() {
   clearInterval(cam.watch);
   cam.watch = null;
+  clearTimeout(cam.refresh);
+  cam.refresh = null;
+  clearInterval(cam.stall);
+  cam.stall = null;
   if (cam.abort) { cam.abort.abort(); cam.abort = null; }
   const img = CAM.img;
   img.onerror = null;
@@ -333,10 +352,10 @@ function stopCamera() {
   CAM.canvas.hidden = true;
 }
 
-async function startCamera() {
+async function startCamera({ quiet = false } = {}) {
   stopCamera();
   if (!cfg || cam.paused || inBackground()) return;
-  camMsg('Connecting to the camera…');
+  if (!quiet) camMsg('Connecting to the camera…');
   control('streamCtrl_cmd', { action: 'open' }).catch(() => {});
 
   // Briefly wait for the first /detail so we can use the URL the printer reports.
@@ -347,6 +366,7 @@ async function startCamera() {
   const img = CAM.img;
   img.onerror = () => { clearInterval(cam.watch); startCanvasStream(); };
   img.src = cam.url;
+  scheduleCamRefresh();
 
   const started = Date.now();
   cam.watch = setInterval(() => {
@@ -368,6 +388,12 @@ async function startCanvasStream() {
   const canvas = CAM.canvas;
   const ctx = canvas.getContext('2d');
   cam.abort = new AbortController();
+  // Watchdog: if no frame arrives for a while, reconnect.
+  cam.lastFrame = Date.now();
+  clearInterval(cam.stall);
+  cam.stall = setInterval(() => {
+    if (Date.now() - cam.lastFrame > CAM_STALL_MS && !cam.paused && !inBackground()) startCamera({ quiet: true });
+  }, 5000);
   try {
     const res = await fetch(cam.url, { signal: cam.abort.signal });
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
@@ -397,6 +423,7 @@ async function startCanvasStream() {
               if (canvas.width !== bmp.width) canvas.width = bmp.width;
               if (canvas.height !== bmp.height) canvas.height = bmp.height;
               ctx.drawImage(bmp, 0, 0);
+              cam.lastFrame = Date.now();
               bmp.close();
               if (!shown) { shown = true; canvas.hidden = false; camMsg(null); }
             })
@@ -410,6 +437,8 @@ async function startCanvasStream() {
     throw new Error('Stream ended');
   } catch (e) {
     if (e.name === 'AbortError') return;
+    clearInterval(cam.stall);
+    cam.stall = null;
     canvas.hidden = true;
     camMsg('Couldn’t open the camera. Check that it’s enabled on the printer, or try “Pop out”.');
   }
@@ -737,6 +766,13 @@ for (const b of document.querySelectorAll('[data-preset]')) {
 
 // ---------- Machine ----------
 
+$('optCamRefresh').addEventListener('change', (e) => {
+  camAutoRefresh = e.target.checked;
+  chrome.storage.local.set({ camAutoRefresh });
+  if (camAutoRefresh) { if (CAM.img.src || !CAM.canvas.hidden) scheduleCamRefresh(); }
+  else { clearTimeout(cam.refresh); cam.refresh = null; }
+});
+
 $('btnCalibrate').addEventListener('click', (e) => {
   const level = $('calLevel').checked;
   const vib = $('calVibration').checked;
@@ -862,6 +898,9 @@ function start() {
 }
 
 (async () => {
+  const prefs = await chrome.storage.local.get('camAutoRefresh');
+  camAutoRefresh = prefs.camAutoRefresh !== false;
+  $('optCamRefresh').checked = camAutoRefresh;
   const stored = (await chrome.storage.local.get(STORAGE_KEY))[STORAGE_KEY];
   if (stored?.ip && stored.serial && stored.checkCode) {
     const ok = await chrome.permissions.contains({ origins: [`http://${stored.ip}/*`] });
