@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Adventurer 5M Pro Panel",
+  "version": "2.1.0",
+  "minimum_chrome_version": "116",
+  "description": "Control your Flashforge Adventurer 5M Pro over your local network: camera, temperatures, jobs, tuning, light, fans and files.",
+  "action": {
+    "default_title": "Open side panel (right-click for the full panel)",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "side_panel": {
+    "default_path": "dashboard.html?view=side"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage", "sidePanel", "contextMenus"],
+  "optional_host_permissions": ["http://*/*"]
+}

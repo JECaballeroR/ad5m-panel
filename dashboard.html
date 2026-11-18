@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Adventurer 5M Pro</title>
+  <link rel="icon" href="icons/icon32.png">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <header class="top">
+    <div class="ident">
+      <h1 id="printerName">Adventurer 5M Pro</h1>
+      <span id="statusChip" class="chip" data-tone="idle">Offline</span>
+    </div>
+    <div class="top-actions">
+      <span id="ipLabel" class="muted"></span>
+      <button id="openFull" class="btn" hidden>Open full panel</button>
+      <button id="openSide" class="btn" hidden>Open in side panel</button>
+      <button id="openSettings" class="btn">Connection</button>
+    </div>
+  </header>
+
+  <div id="banner" class="banner" role="alert" hidden></div>
+
+  <main class="layout">
+    <section class="feed-col" aria-label="Camera and current job">
+      <div id="camDocked" class="cam-docked" hidden>
+        <span>The camera is in a floating window.</span>
+        <button id="camBack" class="btn small">Bring it back</button>
+      </div>
+      <div id="camera" class="camera">
+        <img id="camImg" alt="Printer camera" hidden>
+        <canvas id="camCanvas" aria-label="Printer camera" hidden></canvas>
+        <div id="camMsg" class="cam-msg">Connecting to the camera…</div>
+        <div id="camHud" class="cam-hud" hidden>
+          <span id="hudPct">—</span>
+          <span id="hudTemps"></span>
+        </div>
+        <div class="cam-tools">
+          <button id="camToggle">Pause feed</button>
+          <button id="camFloat" title="Always-on-top window that stays visible over other apps">Float</button>
+          <button id="camPopout" title="Separate browser window">New window</button>
+        </div>
+      </div>
+
+      <div class="job">
+        <div class="job-head">
+          <img id="thumb" alt="" hidden>
+          <div class="job-title">
+            <p id="fileName" class="file">No active job</p>
+            <p id="jobMeta" class="muted"></p>
+          </div>
+          <p id="pct" class="pct">—</p>
+        </div>
+        <div id="progressBar" class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Print progress">
+          <span id="progressFill"></span>
+        </div>
+        <dl class="job-stats">
+          <div><dt>Layer</dt><dd id="layer">—</dd></div>
+          <div><dt>Elapsed</dt><dd id="elapsed">—</dd></div>
+          <div><dt>Remaining</dt><dd id="remaining">—</dd></div>
+          <div><dt>Finishes at</dt><dd id="eta">—</dd></div>
+          <div><dt>Filament</dt><dd id="filament">—</dd></div>
+          <div><dt>Speed</dt><dd id="speedNow">—</dd></div>
+        </dl>
+        <div class="job-actions">
+          <button id="btnPause" class="btn" disabled>Pause</button>
+          <button id="btnResume" class="btn primary" disabled>Resume</button>
+          <button id="btnCancel" class="btn danger" disabled>Cancel print</button>
+          <button id="btnClear" class="btn" hidden>Mark build plate clear</button>
+        </div>
+      </div>
+
+      <section class="panel" aria-labelledby="hTune">
+        <h2 id="hTune">Print tuning</h2>
+        <div class="row slider">
+          <label for="rngSpeed">Print speed <output id="outSpeed">—</output></label>
+          <input id="rngSpeed" type="range" min="50" max="150" step="5" value="100">
+        </div>
+        <div class="row">
+          <span>Z offset <output id="outZ" class="muted">—</output></span>
+          <div class="stepper" role="group" aria-label="Adjust Z offset">
+            <button class="btn small" data-z="-0.05">−0.05</button>
+            <button class="btn small" data-z="-0.01">−0.01</button>
+            <button class="btn small" data-z="0.01">+0.01</button>
+            <button class="btn small" data-z="0.05">+0.05</button>
+          </div>
+        </div>
+        <div class="row slider">
+          <label for="rngCooling">Part cooling fan <output id="outCooling">—</output></label>
+          <input id="rngCooling" type="range" min="0" max="100" step="5" value="0">
+        </div>
+        <div class="row slider">
+          <label for="rngChamberFan">Auxiliary fan <output id="outChamberFan">—</output></label>
+          <input id="rngChamberFan" type="range" min="0" max="100" step="5" value="0">
+        </div>
+        <p id="printOnlyHint" class="hint">Speed, Z offset and fans can only be changed while printing.</p>
+      </section>
+    </section>
+
+    <aside class="side">
+      <section class="panel" aria-labelledby="hTemps">
+        <h2 id="hTemps">Temperatures</h2>
+        <div class="temp" data-kind="nozzle">
+          <div class="temp-head"><span>Nozzle</span><span class="temp-val"><b id="tNozzle">—</b><small id="tNozzleTarget"></small></span></div>
+          <div class="temp-bar"><span id="barNozzle"></span><i id="markNozzle"></i></div>
+          <form class="temp-set" data-target="rightNozzle" data-max="265">
+            <input type="number" min="0" max="265" step="1" placeholder="Target °C" aria-label="Nozzle target temperature">
+            <button class="btn small" type="submit">Set</button>
+            <button class="btn small" type="button" data-off>Off</button>
+          </form>
+        </div>
+        <div class="temp" data-kind="bed">
+          <div class="temp-head"><span>Bed</span><span class="temp-val"><b id="tBed">—</b><small id="tBedTarget"></small></span></div>
+          <div class="temp-bar"><span id="barBed"></span><i id="markBed"></i></div>
+          <form class="temp-set" data-target="platform" data-max="100">
+            <input type="number" min="0" max="100" step="1" placeholder="Target °C" aria-label="Bed target temperature">
+            <button class="btn small" type="submit">Set</button>
+            <button class="btn small" type="button" data-off>Off</button>
+          </form>
+        </div>
+        <div class="temp" data-kind="chamber">
+          <div class="temp-head"><span>Chamber</span><span class="temp-val"><b id="tChamber">—</b><small id="tChamberTarget"></small></span></div>
+          <div class="temp-bar"><span id="barChamber"></span><i id="markChamber"></i></div>
+          <form id="chamberSet" class="temp-set" data-target="chamber" data-max="60" hidden>
+            <input type="number" min="0" max="60" step="1" placeholder="Target °C" aria-label="Chamber target temperature">
+            <button class="btn small" type="submit">Set</button>
+            <button class="btn small" type="button" data-off>Off</button>
+          </form>
+        </div>
+        <div class="presets" role="group" aria-label="Preheat presets">
+          <button class="btn small" data-preset="210,60">Preheat PLA</button>
+          <button class="btn small" data-preset="240,80">Preheat PETG</button>
+          <button class="btn small" data-preset="255,100">Preheat ABS</button>
+          <button class="btn small" data-preset="0,0">Cool down</button>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="hAir">
+        <h2 id="hAir">Light and air</h2>
+        <div class="row">
+          <span id="lblLight">LED light</span>
+          <button id="swLight" class="switch" role="switch" aria-checked="false" aria-labelledby="lblLight"></button>
+        </div>
+        <div class="row">
+          <span id="lblInternal">Internal filtration</span>
+          <button id="swInternal" class="switch" role="switch" aria-checked="false" aria-labelledby="lblInternal"></button>
+        </div>
+        <div class="row">
+          <span id="lblExternal">External exhaust</span>
+          <button id="swExternal" class="switch" role="switch" aria-checked="false" aria-labelledby="lblExternal"></button>
+        </div>
+        <div class="row">
+          <span>Air quality (TVOC)</span>
+          <span id="tvoc" class="muted">—</span>
+        </div>
+        <div class="row">
+          <span>Door</span>
+          <span id="door" class="muted">—</span>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="hFiles">
+        <h2 id="hFiles">Files</h2>
+        <label id="drop" class="drop">
+          <input id="fileInput" type="file" accept=".gcode,.gx,.3mf">
+          <span>Drop a .gcode or .3mf here, or click to choose one</span>
+        </label>
+        <div class="opts">
+          <label><input id="optPrintNow" type="checkbox" checked> Print after upload</label>
+          <label><input id="optLevel" type="checkbox" checked> Level bed before printing</label>
+        </div>
+        <div id="uploadBox" class="upload" hidden>
+          <div class="progress"><span id="uploadFill"></span></div>
+          <p id="uploadText" class="hint"></p>
+        </div>
+        <div class="files-head">
+          <h3>Recent on the printer</h3>
+          <button id="btnRefreshFiles" class="btn small">Refresh</button>
+        </div>
+        <ul id="fileList" class="files"></ul>
+      </section>
+
+      <section class="panel" aria-labelledby="hMachine">
+        <h2 id="hMachine">Machine</h2>
+
+        <h3>Calibration</h3>
+        <div class="opts">
+          <label><input id="calLevel" type="checkbox" checked> Bed leveling</label>
+          <label><input id="calVibration" type="checkbox"> Vibration compensation</label>
+        </div>
+        <button id="btnCalibrate" class="btn small">Start calibration</button>
+        <p class="hint">Only runs while the printer is idle.</p>
+
+        <h3 class="sub">Auto shutdown</h3>
+        <div class="row">
+          <span id="lblShutdown">Turn off after a print finishes</span>
+          <button id="swShutdown" class="switch" role="switch" aria-checked="false" aria-labelledby="lblShutdown"></button>
+        </div>
+        <form id="shutdownForm" class="inline-form">
+          <label for="shutdownMin">Wait</label>
+          <input id="shutdownMin" type="number" min="1" max="999" step="1" value="30">
+          <span class="muted">minutes</span>
+          <button class="btn small" type="submit">Save</button>
+        </form>
+
+        <h3 class="sub">Printer name</h3>
+        <form id="renameForm" class="inline-form">
+          <input id="renameInput" type="text" maxlength="40" aria-label="Printer name">
+          <button class="btn small" type="submit">Rename</button>
+        </form>
+
+        <h3 class="sub">Details</h3>
+        <dl id="info" class="info"></dl>
+      </section>
+    </aside>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <dialog id="settings" aria-labelledby="settingsTitle">
+    <form id="settingsForm" novalidate>
+      <h2 id="settingsTitle">Connect your printer</h2>
+      <p class="muted">The extension talks to the printer directly on your local network. Nothing goes through the cloud.</p>
+      <label>IP address
+        <input id="fIp" required placeholder="192.168.1.50" autocomplete="off" spellcheck="false">
+      </label>
+      <label>Serial number
+        <input id="fSerial" required placeholder="SN…" autocomplete="off" spellcheck="false">
+      </label>
+      <label>Check code
+        <input id="fCode" required autocomplete="off" spellcheck="false">
+      </label>
+      <details>
+        <summary>Where do I find these?</summary>
+        <ol>
+          <li>On the printer screen, tap the gear (Settings), then the Wi‑Fi icon.</li>
+          <li>Under “Network mode”, turn on “LAN only”. The check code (sometimes shown as printer ID) and the IP address appear there.</li>
+          <li>The serial number is on the machine info screen (the “i” icon in Settings). It usually starts with SN.</li>
+        </ol>
+        <p class="hint">With LAN only on, the FlashMaker app and cloud mode stop working; Orca‑Flashforge keeps working in LAN mode. Reserve the printer’s IP in your router so it doesn’t change.</p>
+      </details>
+      <p id="formStatus" class="form-status" role="status"></p>
+      <div class="dialog-actions">
+        <button type="button" id="btnForget" class="btn danger">Forget printer</button>
+        <span class="spacer"></span>
+        <button type="button" id="btnCloseSettings" class="btn">Cancel</button>
+        <button type="submit" id="btnConnect" class="btn primary">Connect</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="dashboard.js"></script>
+</body>
+</html>
