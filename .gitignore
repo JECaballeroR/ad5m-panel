@@ -1,6 +1,18 @@
-# Include your project-specific ignores in this file
-# Read about how to use .gitignore: https://help.github.com/articles/ignoring-files
-# Useful .gitignore templates: https://github.com/github/gitignore
-node_modules
-dist
-.cache
+# Claves y builds de la extensión
+*.pem
+*.crx
+*.zip
+dist/
+
+# Dependencias (si agregas tooling)
+node_modules/
+
+# Sistema y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Archivos locales de prueba
+*.local.*
+.env
