@@ -6,6 +6,9 @@ Version 2.2.0
 
 ## Features
 
+![Application Screenshot](./img/screenshot1.png)
+
+
 **Views**
 - Side panel: click the toolbar icon to open a compact one-column view next to any page.
 - Full panel: a two-column dashboard in its own tab. Open it from the side panel with "Open full panel" (the side panel closes itself) or by right-clicking the toolbar icon.
